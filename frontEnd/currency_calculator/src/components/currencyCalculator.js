@@ -1,118 +1,118 @@
-import axios from 'axios'
-import {useState, useEffect} from 'react'
+import axios from "axios";
+import { useState, useEffect } from "react";
+import Input from "./input.js";
 
 function CurrencyCalculator() {
-
-    const [data, setData] = useState({})
-    const [sum, setSum] = useState(1)
-    const [conversion, setConversion] = useState(0)
-    const [actualSum, setActualSum] = useState(1)
-    const [actualSumCurrency, setActualSumCurrency] = useState("EUR")
-    const [actualConversion, setActualConversion] = useState(0)
-    const [actualConversionCurrency, setActualConversionCurrency] = useState("USD")
+    const [data, setData] = useState({});
+    const [sum, setSum] = useState(1);
+    const [conversion, setConversion] = useState(0);
+    const [actualSum, setActualSum] = useState(1);
+    const [actualSumCurrency, setActualSumCurrency] = useState("EUR");
+    const [actualConversion, setActualConversion] = useState(0);
+    const [conversionToOne, setConversionToOne] = useState(0);
+    const [actualConversionCurrency, setActualConversionCurrency] = useState("USD");
 
     useEffect(() => {
-        axios.get('http://localhost:4000/').then(res => {
-        console.log(res.data["rate"]["USD"])
-        setActualConversion(res.data["rate"]["USD"])
-        setConversion(res.data["rate"]["USD"])
-        setData(res.data)
-    })
-    },[])
+        axios.get("http://localhost:4000/").then((res) => {
+            setActualConversion(res.data["rate"]["USD"]);
+            setConversionToOne(res.data["rate"]["USD"]);
+            setConversion(res.data["rate"]["USD"]);
+            setData(res.data);
+        });
+    }, []);
 
-    /* axios.get('http://localhost:4000/bycurrency?currency=USD').then(res => {
-        console.log(res.data)
-        setData(res.data)
-    }) */
+    useEffect(() => {
+        setConversion(convert(sum, actualSum, actualConversion));
+    }, [sum]);
+    const convert = (sum, actualSum, actualConversion) => {
+        return (sum / actualSum) * actualConversion;
+    };
+    let inputCurency;
+    if (data["rates"] !== undefined) {
+        inputCurency = data["rates"].map((item) => {
+            return (
+                <option key={item["name"]} value={item["name"]}>
+                    {item["name"]}
+                </option>
+            );
+        });
+    }
+    const sumCurrencyChange = (currency) => {
+        setActualSum(data["rate"][currency]);
+        setActualSumCurrency(currency);
+        setConversionToOne(
+            convert(1, data["rate"][currency], actualConversion)
+        );
+        setConversion(convert(sum, data["rate"][currency], actualConversion));
+    };
 
-    useEffect(() =>{
-        setConversion(convert)
-    },[sum])
-    console.log(sum)
-    console.log(data)
-    const convert = () =>{
-        let result = sum / actualSum * actualConversion
-        return result
-    }
-    let inputCurency
-    if(data["rates"] !== undefined){
-        inputCurency = data["rates"].map((item) =>{
-            return(
-                <option key = {item["name"]} value={item["name"]}>{item["name"]}</option>
-            )
-        })
-    }
-    const setCurrency = (currency) =>{
-        setActualSum( data["rate"][currency])
-    }
-
+    const conversionCurrencyChange = (currency) => {
+        setActualConversion(data["rate"][currency]);
+        setActualConversionCurrency(currency);
+        setConversionToOne(convert(1, actualSum, data["rate"][currency]));
+        setConversion(convert(sum, actualSum, data["rate"][currency]));
+    };
 
     return (
-      <div className='bg-blue-950 grid h-screen place-items-center'>
-        <div >
-            <h1 className='text-white font-bold text-3xl'>Menová kalkulačka</h1>
-            <div className='bg-white p-5 rounded-lg'>
-                <form>
-                    <div className='flex'>
-                        <div>
-                            <label className='text-sm'>Suma:</label>
-                            <div className="relative mt-2 rounded-md shadow-sm">
-                                <input 
-                                type="number" 
-                                value={sum}
-                                onChange={(e) => setSum(e.target.value)}
-                                className="[-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none block w-full rounded-md border-0 py-1.5 pl-7 pr-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" 
+        <div className="bg-blue-950 grid h-screen place-items-center">
+            <div>
+                <h1 className="text-white font-bold text-3xl">
+                    Menová kalkulačka
+                </h1>
+                <div className="bg-white p-7 rounded-lg mt-5">
+                    <form>
+                        <div className="flex sm:items-end flex-col sm:flex-row items-center m/">
+                            <div className="sm:mr-5 m-0">
+                                <label className="text-sm opacity-75">
+                                    Suma
+                                </label>
+                                <Input
+                                    rate={sum}
+                                    name={actualSumCurrency}
+                                    inputCurency={inputCurency}
+                                    setValue={(e) => setSum(e)}
+                                    setName={(e) => sumCurrencyChange(e)}
                                 />
-                                <div className="absolute inset-y-0 right-0 flex items-center">
-                                    <label  className="sr-only">Currency</label>
-                                    <select 
-                                    onChange={(e) => setActualSum( data["rate"][e.target.value])}
-                                    id="currencySum" 
-                                    className="h-full rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
-                                    >
-                                        {inputCurency}
-                                    </select>
-                                </div>
                             </div>
-                            <div className='font-bold flex'>
-                                {actualSum} 
-                                {actualSumCurrency}
-                                = 
-                                <p className='text-blue-500'>{actualConversion}</p>
-                                {actualConversionCurrency}
+                            <div className="h-9 flex items-center sm:m-0 my-3">
+                                <svg
+                                    className="h-6 w-6 origin-center rotate-90 sm:rotate-0 opacity-75"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"></path>
+                                </svg>
+                            </div>
+                            <div className="sm:ml-5 m-0">
+                                <label className="text-sm opacity-75">
+                                    Prepočet
+                                </label>
+                                <Input
+                                    rate={Number(conversion).toFixed(2)}
+                                    name={actualConversionCurrency}
+                                    inputCurency={inputCurency}
+                                    setValue={(e) => setConversion(e)}
+                                    setName={(e) => conversionCurrencyChange(e)}
+                                />
                             </div>
                         </div>
-                        <div>
-                            <label className='text-sm'>Prepočet:</label>
-                            <div className="relative mt-2 rounded-md shadow-sm">
-                                <input 
-                                type="number" 
-                                value={conversion}
-                                placeholder={conversion}
-                                onChange={(e) => setConversion(e.target.value)}
-                                className="[-moz-appearance:_textfield] [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none block w-full rounded-md border-0 py-1.5 pl-7 pr-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" 
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center">
-                                    <label  className="sr-only">Currency</label>
-                                    <select 
-                                    onChange={(e) => setActualConversion( data["rate"][e.target.value])}
-                                    id="currency2" 
-                                    className="h-full rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
-                                    >
-                                         {inputCurency}
-                                    </select>
-                                </div>
-                            </div>
-                            <button className="bg-blue-950 hover:bg-blue-700 text-white font-medium py-2 px-8  rounded-full">
-                                Prepočítať
-                            </button>
+                        <div className="font-bold flex mt-3">
+                            1
+                            {actualSumCurrency}
+                            =
+                            <p className="text-blue-500">
+                                {Number(conversionToOne).toFixed(4)}
+                            </p>
+                            {actualConversionCurrency}
                         </div>
-                    </div>
-                    
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-      </div>
     );
-  }
-  export default CurrencyCalculator;
+}
+export default CurrencyCalculator;
